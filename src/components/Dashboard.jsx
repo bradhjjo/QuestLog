@@ -8,10 +8,10 @@ import { useUser } from '../hooks/useUser';
 
 import { supabase } from '../supabaseClient';
 
-const Dashboard = ({ role }) => {
+const Dashboard = ({ role, initialTab = 'quests' }) => {
     const { todos, addTodo, deleteTodo, toggleComplete, approveTodo } = useTodos();
     const { xp, addXp, spendXp } = useUser();
-    const [activeTab, setActiveTab] = useState('quests');
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [newPassword, setNewPassword] = useState('');
     const [loading, setLoading] = useState(false);
 

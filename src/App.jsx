@@ -10,6 +10,7 @@ function App() {
   const [session, setSession] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -22,6 +23,9 @@ function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (_event === 'PASSWORD_RECOVERY') {
+        setRecoveryMode(true);
+      }
       if (session) fetchProfile(session.user.id);
       else setRole(null);
       setLoading(false);
@@ -55,6 +59,7 @@ function App() {
     await supabase.auth.signOut();
     setRole(null);
     setSession(null);
+    setRecoveryMode(false);
   };
 
   if (loading) {
@@ -81,7 +86,7 @@ function App() {
         <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>Loading Profile...</div>
       ) : (
         <Layout role={role} onLogout={handleLogout}>
-          <Dashboard role={role} />
+          <Dashboard role={role} initialTab={recoveryMode ? 'settings' : 'quests'} />
         </Layout>
       )}
     </>
