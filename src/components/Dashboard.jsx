@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
-import React, { useState } from 'react';
-import confetti from 'canvas-confetti';
 import TodoList from './TodoList';
 import RewardShop from './RewardShop';
 import LevelProgress from './LevelProgress';
