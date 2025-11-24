@@ -54,10 +54,17 @@ export const useTodos = () => {
         if (!todo || todo.status === 'approved') return;
 
         const newStatus = todo.status === 'pending' ? 'completed' : 'pending';
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // If completing, set completed_by to current user. If undoing, set to null.
+        const updates = {
+            status: newStatus,
+            completed_by: newStatus === 'completed' ? user.id : null
+        };
 
         const { error } = await supabase
             .from('todos')
-            .update({ status: newStatus })
+            .update(updates)
             .eq('id', id);
 
         if (error) console.error('Error updating todo:', error);

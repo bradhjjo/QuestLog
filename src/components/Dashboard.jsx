@@ -11,22 +11,6 @@ import { supabase } from '../supabaseClient';
 const Dashboard = ({ role, initialTab = 'quests' }) => {
     const { todos, addTodo, deleteTodo, toggleComplete, approveTodo } = useTodos();
     const { xp, addXp, spendXp } = useUser();
-    const [activeTab, setActiveTab] = useState(initialTab);
-    const [newPassword, setNewPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    const handleApprove = (id) => {
-        const todo = todos.find(t => t.id === id);
-        if (todo) {
-            approveTodo(id);
-            addXp(todo.reward);
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
-        }
-    };
 
     const handlePasswordChange = async (e) => {
         e.preventDefault();
