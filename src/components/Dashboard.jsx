@@ -11,6 +11,46 @@ import { supabase } from '../supabaseClient';
 const Dashboard = ({ role, initialTab = 'quests' }) => {
     const { todos, addTodo, deleteTodo, toggleComplete, approveTodo } = useTodos();
     const { xp, addXp, spendXp } = useUser();
+    const [activeTab, setActiveTab] = useState(initialTab);
+    const [newPassword, setNewPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleApprove = async (id) => {
+        const todo = todos.find(t => t.id === id);
+        if (todo && todo.completed_by) {
+            approveTodo(id);
+
+            // Update the XP of the user who COMPLETED the task
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('xp')
+                .eq('id', todo.completed_by)
+                .single();
+
+            if (profile) {
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({ xp: profile.xp + todo.reward })
+                    .eq('id', todo.completed_by);
+
+                if (error) console.error('Error updating XP:', error);
+            }
+
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        } else if (todo) {
+            // Fallback if completed_by is missing (legacy tasks)
+            approveTodo(id);
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+    };
 
     const handlePasswordChange = async (e) => {
         e.preventDefault();
