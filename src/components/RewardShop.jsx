@@ -1,54 +1,160 @@
 import React, { useState } from 'react';
-
-const DEFAULT_REWARDS = [
-    { id: 1, title: '1 Hour Screen Time', cost: 100, icon: '📱' },
-    { id: 2, title: 'Pizza Night', cost: 500, icon: '🍕' },
-    { id: 3, title: 'New Game', cost: 2000, icon: '🎮' },
-    { id: 4, title: 'Movie Ticket', cost: 300, icon: '🎬' },
-];
+import { useRewards } from '../hooks/useRewards';
 
 const RewardShop = ({ role, xp, onSpend }) => {
-    const [rewards] = useState(DEFAULT_REWARDS);
+  const { rewards, addReward, updateReward, deleteReward } = useRewards();
+  const [showForm, setShowForm] = useState(false);
+  const [editingReward, setEditingReward] = useState(null);
+  const [formData, setFormData] = useState({ title: '', cost: '', icon: '🎁' });
 
-    const handleRedeem = (reward) => {
-        if (xp >= reward.cost) {
-            const success = onSpend(reward.cost);
-            if (success) {
-                alert(`Redeemed: ${reward.title}!`);
-            }
-        } else {
-            alert("Not enough XP!");
-        }
-    };
+  const handleRedeem = (reward) => {
+    if (xp >= reward.cost) {
+      const success = onSpend(reward.cost);
+      if (success) {
+        alert(`Redeemed: ${reward.title}!`);
+      }
+    } else {
+      alert("Not enough XP!");
+    }
+  };
 
-    return (
-        <div className="reward-shop">
-            <h3 className="title-gradient" style={{ marginBottom: 'var(--spacing-lg)' }}>Loot Box</h3>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (editingReward) {
+      await updateReward(editingReward.id, formData.title, formData.cost, formData.icon);
+    } else {
+      await addReward(formData.title, formData.cost, formData.icon);
+    }
+    setFormData({ title: '', cost: '', icon: '🎁' });
+    setShowForm(false);
+    setEditingReward(null);
+  };
 
-            <div className="rewards-grid">
-                {rewards.map(reward => (
-                    <div key={reward.id} className={`reward-card ${xp >= reward.cost ? 'affordable' : 'locked'}`}>
-                        <div className="reward-icon">{reward.icon}</div>
-                        <h4>{reward.title}</h4>
-                        <div className="reward-cost">
-                            <span className="cost-value">{reward.cost} XP</span>
-                        </div>
+  const handleEdit = (reward) => {
+    setEditingReward(reward);
+    setFormData({ title: reward.title, cost: reward.cost, icon: reward.icon });
+    setShowForm(true);
+  };
 
-                        {role === 'teen' && (
-                            <button
-                                onClick={() => handleRedeem(reward)}
-                                disabled={xp < reward.cost}
-                                className={`btn ${xp >= reward.cost ? 'btn-primary' : 'btn-secondary'}`}
-                                style={{ width: '100%', marginTop: 'var(--spacing-md)' }}
-                            >
-                                Redeem
-                            </button>
-                        )}
-                    </div>
-                ))}
+  const handleDelete = async (id) => {
+    if (confirm('Are you sure you want to delete this reward?')) {
+      await deleteReward(id);
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData({ title: '', cost: '', icon: '🎁' });
+    setShowForm(false);
+    setEditingReward(null);
+  };
+
+  return (
+    <div className="reward-shop">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
+        <h3 className="title-gradient">Loot Box</h3>
+        {role === 'parent' && !showForm && (
+          <button onClick={() => setShowForm(true)} className="btn btn-primary">
+            + Add Reward
+          </button>
+        )}
+      </div>
+
+      {showForm && role === 'parent' && (
+        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
+          <h4 style={{ marginBottom: 'var(--spacing-md)' }}>
+            {editingReward ? 'Edit Reward' : 'New Reward'}
+          </h4>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group" style={{ marginBottom: 'var(--spacing-md)' }}>
+              <label>Icon</label>
+              <input
+                className="input"
+                type="text"
+                value={formData.icon}
+                onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                placeholder="🎁"
+                maxLength={2}
+                required
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: 'var(--spacing-md)' }}>
+              <label>Title</label>
+              <input
+                className="input"
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Reward name"
+                required
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: 'var(--spacing-md)' }}>
+              <label>Cost (XP)</label>
+              <input
+                className="input"
+                type="number"
+                value={formData.cost}
+                onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                placeholder="100"
+                min="1"
+                required
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+              <button type="submit" className="btn btn-primary">
+                {editingReward ? 'Update' : 'Add'}
+              </button>
+              <button type="button" onClick={handleCancel} className="btn btn-secondary">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="rewards-grid">
+        {rewards.map(reward => (
+          <div key={reward.id} className={`reward-card ${xp >= reward.cost ? 'affordable' : 'locked'}`}>
+            <div className="reward-icon">{reward.icon}</div>
+            <h4>{reward.title}</h4>
+            <div className="reward-cost">
+              <span className="cost-value">{reward.cost} XP</span>
             </div>
 
-            <style>{`
+            {role === 'teen' && (
+              <button
+                onClick={() => handleRedeem(reward)}
+                disabled={xp < reward.cost}
+                className={`btn ${xp >= reward.cost ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ width: '100%', marginTop: 'var(--spacing-md)' }}
+              >
+                Redeem
+              </button>
+            )}
+
+            {role === 'parent' && (
+              <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-md)' }}>
+                <button
+                  onClick={() => handleEdit(reward)}
+                  className="btn btn-secondary btn-sm"
+                  style={{ flex: 1 }}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(reward.id)}
+                  className="btn btn-secondary btn-sm danger"
+                  style={{ flex: 1 }}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <style>{`
         .rewards-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -83,8 +189,8 @@ const RewardShop = ({ role, xp, onSpend }) => {
           color: var(--accent-secondary);
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default RewardShop;
