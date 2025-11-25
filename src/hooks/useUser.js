@@ -1,8 +1,24 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
+// Calculate level from total XP earned
+const calculateLevel = (totalXp) => {
+    if (totalXp < 100) return 1;
+    if (totalXp < 300) return 2;
+    if (totalXp < 600) return 3;
+    if (totalXp < 1000) return 4;
+    if (totalXp < 1500) return 5;
+    if (totalXp < 2100) return 6;
+    if (totalXp < 2800) return 7;
+    if (totalXp < 3600) return 8;
+    if (totalXp < 4500) return 9;
+    return 10;
+};
+
 export const useUser = () => {
     const [xp, setXp] = useState(0);
+    const [level, setLevel] = useState(1);
+    const [totalXpEarned, setTotalXpEarned] = useState(0);
     const [userId, setUserId] = useState(null);
 
     useEffect(() => {
@@ -20,6 +36,8 @@ export const useUser = () => {
                         filter: `id=eq.${user.id}`
                     }, (payload) => {
                         setXp(payload.new.xp);
+                        setLevel(payload.new.level || calculateLevel(payload.new.total_xp_earned || 0));
+                        setTotalXpEarned(payload.new.total_xp_earned || 0);
                     })
                     .subscribe();
 
@@ -33,20 +51,32 @@ export const useUser = () => {
     const fetchProfile = async (id) => {
         const { data, error } = await supabase
             .from('profiles')
-            .select('xp')
+            .select('xp, level, total_xp_earned')
             .eq('id', id)
             .single();
 
         if (error) console.error('Error fetching profile:', error);
-        else setXp(data?.xp || 0);
+        else {
+            setXp(data?.xp || 0);
+            const totalXp = data?.total_xp_earned || 0;
+            setTotalXpEarned(totalXp);
+            setLevel(data?.level || calculateLevel(totalXp));
+        }
     };
 
     const addXp = async (amount) => {
         if (!userId) return;
 
+        const newTotalXp = totalXpEarned + amount;
+        const newLevel = calculateLevel(newTotalXp);
+
         const { error } = await supabase
             .from('profiles')
-            .update({ xp: xp + amount })
+            .update({
+                xp: xp + amount,
+                total_xp_earned: newTotalXp,
+                level: newLevel
+            })
             .eq('id', userId);
 
         if (error) console.error('Error adding XP:', error);
@@ -69,6 +99,8 @@ export const useUser = () => {
 
     return {
         xp,
+        level,
+        totalXpEarned,
         addXp,
         spendXp
     };

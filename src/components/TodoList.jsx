@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove }) => {
+const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children }) => {
   const [newTitle, setNewTitle] = useState('');
   const [newReward, setNewReward] = useState(10);
 
@@ -55,6 +55,15 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove }) => {
                     <span className={`status-badge ${todo.status}`}>{todo.status}</span>
                   </div>
                   <h4>{todo.title}</h4>
+                  {role === 'parent' && todo.status === 'completed' && todo.completed_by && children && (
+                    <p style={{
+                      fontSize: '0.875rem',
+                      color: 'var(--text-secondary)',
+                      marginTop: 'var(--spacing-xs)'
+                    }}>
+                      Completed by: {children.find(c => c.id === todo.completed_by)?.username || 'Teen User'}
+                    </p>
+                  )}
                 </div>
 
                 <div className="task-actions">

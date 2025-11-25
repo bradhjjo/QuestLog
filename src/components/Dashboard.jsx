@@ -11,11 +11,20 @@ import { supabase } from '../supabaseClient';
 
 const Dashboard = ({ role, initialTab = 'quests' }) => {
     const { todos, addTodo, deleteTodo, toggleComplete, approveTodo } = useTodos();
-    const { xp, addXp, spendXp } = useUser();
+    const { xp, level, addXp, spendXp } = useUser();
     const { children } = useChildren();
     const [activeTab, setActiveTab] = useState(initialTab);
     const [newPassword, setNewPassword] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Pokemon evolution based on level
+    const getPokemon = (lvl) => {
+        if (lvl <= 2) return '🥚'; // Egg
+        if (lvl <= 4) return '🐛'; // Caterpie
+        if (lvl <= 6) return '🦋'; // Butterfree
+        if (lvl <= 8) return '🔥'; // Charmander
+        return '🐉'; // Charizard
+    };
 
     const handleApprove = async (id) => {
         const todo = todos.find(t => t.id === id);
@@ -25,14 +34,21 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
             // Update the XP of the user who COMPLETED the task
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('xp')
+                .select('xp, total_xp_earned, level')
                 .eq('id', todo.completed_by)
                 .single();
 
             if (profile) {
+                const newTotalXp = (profile.total_xp_earned || 0) + todo.reward;
+                const newLevel = calculateLevel(newTotalXp);
+
                 const { error } = await supabase
                     .from('profiles')
-                    .update({ xp: profile.xp + todo.reward })
+                    .update({
+                        xp: profile.xp + todo.reward,
+                        total_xp_earned: newTotalXp,
+                        level: newLevel
+                    })
                     .eq('id', todo.completed_by);
 
                 if (error) console.error('Error updating XP:', error);
@@ -71,18 +87,42 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
         }
     };
 
+    // Calculate level from total XP
+    const calculateLevel = (totalXp) => {
+        if (totalXp < 100) return 1;
+        if (totalXp < 300) return 2;
+        if (totalXp < 600) return 3;
+        if (totalXp < 1000) return 4;
+        if (totalXp < 1500) return 5;
+        if (totalXp < 2100) return 6;
+        if (totalXp < 2800) return 7;
+        if (totalXp < 3600) return 8;
+        if (totalXp < 4500) return 9;
+        return 10;
+    };
+
     return (
         <div className="dashboard">
             <div className="stats-bar card" style={{ marginBottom: 'var(--spacing-lg)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
                         {role === 'teen' && (
-                            <div style={{
-                                fontSize: '3rem',
-                                animation: 'bounce 2s infinite',
-                                filter: 'drop-shadow(0 4px 8px rgba(0, 255, 157, 0.3))'
-                            }}>
-                                {xp < 100 ? '🥚' : xp < 500 ? '🐣' : xp < 1000 ? '🐥' : xp < 2000 ? '🦆' : '🦅'}
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{
+                                    fontSize: '3rem',
+                                    animation: 'bounce 2s infinite',
+                                    filter: 'drop-shadow(0 4px 8px rgba(0, 255, 157, 0.3))'
+                                }}>
+                                    {getPokemon(level)}
+                                </div>
+                                <div style={{
+                                    fontSize: '0.75rem',
+                                    color: 'var(--accent-primary)',
+                                    fontWeight: 'bold',
+                                    marginTop: '-0.5rem'
+                                }}>
+                                    Lv.{level}
+                                </div>
                             </div>
                         )}
                         <div>
@@ -155,6 +195,7 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
                     onDelete={deleteTodo}
                     onToggle={toggleComplete}
                     onApprove={handleApprove}
+                    children={children}
                 />
             )}
 
