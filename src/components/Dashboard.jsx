@@ -105,7 +105,7 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
                                         borderRadius: 'var(--radius-md)',
                                         border: '1px solid var(--border-color)'
                                     }}>
-                                        <span style={{ color: 'var(--text-primary)' }}>{child.email}</span>
+                                        <span style={{ color: 'var(--text-primary)' }}>{child.username || 'Teen User'}</span>
                                         <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>{child.xp} XP</span>
                                     </div>
                                 ))}
