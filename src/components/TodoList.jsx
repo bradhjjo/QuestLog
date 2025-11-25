@@ -88,65 +88,118 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove }) => {
         )}
       </div>
 
-      .task-card {
-        background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: var(--spacing-md);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: all 0.2s ease;
+      <style>{`
+        .add-task-form {
+          margin-bottom: var(--spacing-xl);
         }
-      .task-card.completed {
-        border - color: var(--accent-warning);
-      background: rgba(255, 204, 0, 0.05);
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: var(--spacing-sm);
+          margin-top: var(--spacing-md);
         }
-      .task-card.approved {
-        border - color: var(--accent-primary);
-      background: rgba(0, 255, 157, 0.05);
-      opacity: 0.7;
+        .form-row {
+          display: flex;
+          gap: var(--spacing-sm);
+          flex-wrap: wrap;
         }
+        .input {
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
+          color: var(--text-primary);
+          padding: var(--spacing-sm);
+          border-radius: var(--radius-md);
+          font-family: inherit;
+        }
+        .input:focus {
+          outline: none;
+          border-color: var(--accent-primary);
+        }
+        .input[type="text"] {
+          width: 100%;
+        }
+        .reward-input {
+          flex: 1;
+          min-width: 100px;
+        }
+        .btn-primary {
+          flex: 1;
+          min-width: 120px;
+        }
+        
+        @media (max-width: 768px) {
+          .form-row {
+            flex-direction: column;
+          }
+          .reward-input,
+          .btn-primary {
+            width: 100%;
+          }
+        }
+        
+        .tasks-grid {
+          display: grid;
+          gap: var(--spacing-md);
+        }
+        .task-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          padding: var(--spacing-md);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          transition: all 0.2s ease;
+        }
+        .task-card.completed {
+          border-color: var(--accent-warning);
+          background: rgba(255, 204, 0, 0.05);
+        }
+        .task-card.approved {
+          border-color: var(--accent-primary);
+          background: rgba(0, 255, 157, 0.05);
+          opacity: 0.7;
+        }
+        
+        .task-header {
+          display: flex;
+          gap: var(--spacing-sm);
+          margin-bottom: var(--spacing-xs);
+        }
+        .xp-badge {
+          color: var(--accent-primary);
+          font-weight: bold;
+          font-size: var(--font-size-sm);
+        }
+        .status-badge {
+          font-size: 0.75rem;
+          padding: 2px 6px;
+          border-radius: var(--radius-sm);
+          text-transform: uppercase;
+          font-weight: bold;
+        }
+        .status-badge.pending { background: var(--bg-secondary); color: var(--text-muted); }
+        .status-badge.completed { background: var(--accent-warning); color: var(--bg-primary); }
+        .status-badge.approved { background: var(--accent-primary); color: var(--bg-primary); }
 
-      .task-header {
-        display: flex;
-      gap: var(--spacing-sm);
-      margin-bottom: var(--spacing-xs);
+        .task-actions {
+          display: flex;
+          gap: var(--spacing-sm);
         }
-      .xp-badge {
-        color: var(--accent-primary);
-      font-weight: bold;
-      font-size: var(--font-size-sm);
+        .btn-sm {
+          padding: 0.25rem 0.75rem;
+          font-size: 0.875rem;
         }
-      .status-badge {
-        font - size: 0.75rem;
-      padding: 2px 6px;
-      border-radius: var(--radius-sm);
-      text-transform: uppercase;
-      font-weight: bold;
+        .danger {
+          color: var(--accent-danger);
+          border-color: var(--accent-danger);
         }
-      .status-badge.pending {background: var(--bg-secondary); color: var(--text-muted); }
-      .status-badge.completed {background: var(--accent-warning); color: var(--bg-primary); }
-      .status-badge.approved {background: var(--accent-primary); color: var(--bg-primary); }
-
-      .task-actions {
-        display: flex;
-      gap: var(--spacing-sm);
-        }
-      .btn-sm {
-        padding: 0.25rem 0.75rem;
-      font-size: 0.875rem;
-        }
-      .danger {
-        color: var(--accent-danger);
-      border-color: var(--accent-danger);
-        }
-      .danger:hover {
-        background: var(--accent-danger);
-      color: white;
+        .danger:hover {
+          background: var(--accent-danger);
+          color: white;
         }
       `}</style>
-    </div >
+    </div>
   );
 };
 
