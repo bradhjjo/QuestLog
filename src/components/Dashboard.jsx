@@ -75,11 +75,22 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
         <div className="dashboard">
             <div className="stats-bar card" style={{ marginBottom: 'var(--spacing-lg)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
-                    <div>
-                        <h2 className="title-gradient">Mission Control</h2>
-                        <p style={{ color: 'var(--text-secondary)' }}>
-                            Welcome back, {role === 'parent' ? 'Commander' : 'Adventurer'}!
-                        </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                        {role === 'teen' && (
+                            <div style={{
+                                fontSize: '3rem',
+                                animation: 'bounce 2s infinite',
+                                filter: 'drop-shadow(0 4px 8px rgba(0, 255, 157, 0.3))'
+                            }}>
+                                {xp < 100 ? '🥚' : xp < 500 ? '🐣' : xp < 1000 ? '🐥' : xp < 2000 ? '🦆' : '🦅'}
+                            </div>
+                        )}
+                        <div>
+                            <h2 className="title-gradient">Mission Control</h2>
+                            <p style={{ color: 'var(--text-secondary)' }}>
+                                Welcome back, {role === 'parent' ? 'Commander' : 'Adventurer'}!
+                            </p>
+                        </div>
                     </div>
                     {role === 'teen' && (
                         <div className="xp-display">
