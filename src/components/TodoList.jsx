@@ -1,9 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 
 const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children }) => {
   const [newTitle, setNewTitle] = useState('');
   const [newReward, setNewReward] = useState(10);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [recentQuests, setRecentQuests] = useState([]);
+  const [selectedRecent, setSelectedRecent] = useState('');
+
+  // Fetch recent quests for dropdown
+  useEffect(() => {
+    if (role === 'parent') {
+      fetchRecentQuests();
+    }
+  }, [role, todos]); // Re-fetch when todos change
+
+  const fetchRecentQuests = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('todos')
+      .select('title, reward')
+      .eq('user_id', user.id)
+      .eq('status', 'approved')
+      .order('inserted_at', { ascending: false })
+      .limit(10);
+
+    if (error) {
+      console.error('Error fetching recent quests:', error);
+      return;
+    }
+
+    // Get unique combinations of title + reward
+    const uniqueQuests = [];
+    const seen = new Set();
+
+    data?.forEach(quest => {
+      const key = `${quest.title}-${quest.reward}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueQuests.push(quest);
+      }
+    });
+
+    setRecentQuests(uniqueQuests);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -11,6 +53,18 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
       onAdd(newTitle, newReward);
       setNewTitle('');
       setNewReward(10);
+      setSelectedRecent('');
+    }
+  };
+
+  const handleRecentSelect = (e) => {
+    const value = e.target.value;
+    setSelectedRecent(value);
+
+    if (value) {
+      const [title, reward] = value.split('|||');
+      setNewTitle(title);
+      setNewReward(parseInt(reward));
     }
   };
 
@@ -25,6 +79,21 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
         <form onSubmit={handleSubmit} className="add-task-form card">
           <h3 className="title-gradient">Add New Quest</h3>
           <div className="form-group">
+            {recentQuests.length > 0 && (
+              <select
+                value={selectedRecent}
+                onChange={handleRecentSelect}
+                className="input"
+                style={{ marginBottom: 'var(--spacing-sm)' }}
+              >
+                <option value="">Or select from recent quests...</option>
+                {recentQuests.map((quest, idx) => (
+                  <option key={idx} value={`${quest.title}|||${quest.reward}`}>
+                    {quest.title} ({quest.reward} XP)
+                  </option>
+                ))}
+              </select>
+            )}
             <input
               type="text"
               value={newTitle}
@@ -98,6 +167,19 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
                       {todo.status === 'completed' && (
                         <button onClick={() => onApprove(todo.id)} className="btn btn-primary btn-sm">
                           Approve
+                        </button>
+                      )}
+                      {todo.status === 'approved' && (
+                        <button
+                          onClick={() => onAdd(todo.title, todo.reward)}
+                          className="btn btn-primary btn-sm"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                          }}
+                        >
+                          🔄 Repeat
                         </button>
                       )}
                       <button onClick={() => onDelete(todo.id)} className="btn btn-secondary btn-sm danger">
