@@ -70,6 +70,12 @@ export const useUser = () => {
         const newTotalXp = totalXpEarned + amount;
         const newLevel = calculateLevel(newTotalXp);
 
+        // Optimistic update: Update XP immediately
+        setXp(prev => prev + amount);
+        setTotalXpEarned(newTotalXp);
+        setLevel(newLevel);
+
+        // Server update
         const { error } = await supabase
             .from('profiles')
             .update({
@@ -79,12 +85,23 @@ export const useUser = () => {
             })
             .eq('id', userId);
 
-        if (error) console.error('Error adding XP:', error);
+        if (error) {
+            console.error('Error adding XP:', error);
+            // Rollback on error
+            setXp(prev => prev - amount);
+            setTotalXpEarned(totalXpEarned);
+            setLevel(calculateLevel(totalXpEarned));
+        }
     };
 
     const spendXp = async (amount) => {
         if (!userId || xp < amount) return false;
 
+        // Optimistic update: Deduct XP immediately
+        const previousXp = xp;
+        setXp(prev => prev - amount);
+
+        // Server update
         const { error } = await supabase
             .from('profiles')
             .update({ xp: xp - amount })
@@ -92,6 +109,8 @@ export const useUser = () => {
 
         if (error) {
             console.error('Error spending XP:', error);
+            // Rollback on error
+            setXp(previousXp);
             return false;
         }
         return true;
