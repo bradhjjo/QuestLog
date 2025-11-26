@@ -59,6 +59,11 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
                 spread: 70,
                 origin: { y: 0.6 }
             });
+
+            // Auto-delete after 3 seconds
+            setTimeout(() => {
+                deleteTodo(id);
+            }, 3000);
         } else if (todo) {
             // Fallback if completed_by is missing (legacy tasks)
             approveTodo(id);
@@ -67,6 +72,11 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
                 spread: 70,
                 origin: { y: 0.6 }
             });
+
+            // Auto-delete after 3 seconds
+            setTimeout(() => {
+                deleteTodo(id);
+            }, 3000);
         }
     };
 

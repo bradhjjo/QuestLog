@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children }) => {
   const [newTitle, setNewTitle] = useState('');
   const [newReward, setNewReward] = useState(10);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -12,6 +13,11 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
       setNewReward(10);
     }
   };
+
+  // Filter todos based on showCompleted toggle
+  const filteredTodos = showCompleted
+    ? todos
+    : todos.filter(todo => todo.status !== 'approved');
 
   return (
     <div className="todo-list">
@@ -42,12 +48,21 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
       )}
 
       <div className="tasks-container">
-        <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--text-secondary)' }}>Active Quests</h3>
-        {todos.length === 0 ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
+          <h3 style={{ color: 'var(--text-secondary)' }}>Active Quests</h3>
+          <button
+            onClick={() => setShowCompleted(!showCompleted)}
+            className="btn btn-secondary btn-sm"
+            style={{ fontSize: '0.875rem' }}
+          >
+            {showCompleted ? 'Hide Completed' : 'Show Completed'}
+          </button>
+        </div>
+        {filteredTodos.length === 0 ? (
           <p className="empty-state">No active quests available.</p>
         ) : (
           <div className="tasks-grid">
-            {todos.map(todo => (
+            {filteredTodos.map(todo => (
               <div key={todo.id} className={`task-card ${todo.status}`}>
                 <div className="task-content">
                   <div className="task-header">
