@@ -191,7 +191,7 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
                       )}
                       {todo.status === 'approved' && (
                         <button
-                          onClick={() => onAdd(todo.title, todo.reward)}
+                          onClick={() => onAdd(todo.title, todo.reward, todo.is_daily)}
                           className="btn btn-primary btn-sm"
                           style={{
                             display: 'flex',
