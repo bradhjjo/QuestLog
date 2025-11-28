@@ -29,7 +29,7 @@ export const useTodos = () => {
         else setTodos(data || []);
     };
 
-    const addTodo = async (title, reward) => {
+    const addTodo = async (title, reward, isDaily = false) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
@@ -41,6 +41,7 @@ export const useTodos = () => {
             user_id: user.id,
             status: 'pending',
             completed_by: null,
+            is_daily: isDaily,
             inserted_at: new Date().toISOString()
         };
         setTodos(prev => [optimisticTodo, ...prev]);
@@ -48,7 +49,12 @@ export const useTodos = () => {
         // Server update
         const { error } = await supabase
             .from('todos')
-            .insert([{ title, reward: parseInt(reward, 10) || 10, user_id: user.id }]);
+            .insert([{
+                title,
+                reward: parseInt(reward, 10) || 10,
+                user_id: user.id,
+                is_daily: isDaily
+            }]);
 
         if (error) {
             console.error('Error adding todo:', error);

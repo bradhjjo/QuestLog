@@ -5,6 +5,7 @@ import RoleSelection from './components/RoleSelection';
 import Dashboard from './components/Dashboard';
 import InstallPrompt from './components/InstallPrompt';
 import Auth from './components/Auth';
+import { checkDailyQuestReset } from './utils/dailyQuestReset';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -15,7 +16,11 @@ function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) fetchProfile(session.user.id);
+      if (session) {
+        fetchProfile(session.user.id);
+        // Check and reset daily quests if needed
+        checkDailyQuestReset();
+      }
       setLoading(false);
     });
 

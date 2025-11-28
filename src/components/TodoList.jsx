@@ -7,6 +7,7 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
   const [showCompleted, setShowCompleted] = useState(false);
   const [recentQuests, setRecentQuests] = useState([]);
   const [selectedRecent, setSelectedRecent] = useState('');
+  const [isDaily, setIsDaily] = useState(false);
 
   // Fetch recent quests for dropdown
   useEffect(() => {
@@ -50,10 +51,11 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (newTitle.trim()) {
-      onAdd(newTitle, newReward);
+      onAdd(newTitle, newReward, isDaily);
       setNewTitle('');
       setNewReward(10);
       setSelectedRecent('');
+      setIsDaily(false);
     }
   };
 
@@ -112,6 +114,23 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
               />
               <button type="submit" className="btn btn-primary">Add Quest</button>
             </div>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-sm)',
+              marginTop: 'var(--spacing-sm)',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontSize: '0.875rem'
+            }}>
+              <input
+                type="checkbox"
+                checked={isDaily}
+                onChange={(e) => setIsDaily(e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+              🔄 Daily Quest (resets every day at 6 AM)
+            </label>
           </div>
         </form>
       )}
@@ -135,6 +154,7 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
               <div key={todo.id} className={`task-card ${todo.status}`}>
                 <div className="task-content">
                   <div className="task-header">
+                    {todo.is_daily && <span style={{ fontSize: '1rem', marginRight: '0.25rem' }}>🔄</span>}
                     <span className="xp-badge">+{todo.reward} XP</span>
                     <span className={`status-badge ${todo.status}`}>{todo.status}</span>
                   </div>
