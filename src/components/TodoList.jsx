@@ -131,6 +131,21 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
               />
               🔄 Daily Quest (resets every day at 6 AM)
             </label>
+
+            <div style={{ marginTop: 'var(--spacing-sm)' }}>
+              <select
+                value={timeLimit}
+                onChange={(e) => setTimeLimit(e.target.value)}
+                className="input"
+                style={{ width: '100%' }}
+              >
+                <option value="">⏱️ No Time Limit</option>
+                <option value="1">⏱️ 1 Hour (Event Quest)</option>
+                <option value="3">⏱️ 3 Hours (Event Quest)</option>
+                <option value="12">⏱️ 12 Hours (Event Quest)</option>
+                <option value="24">⏱️ 24 Hours (Event Quest)</option>
+              </select>
+            </div>
           </div>
         </form>
       )}

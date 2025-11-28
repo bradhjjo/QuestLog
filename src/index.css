@@ -129,6 +129,48 @@ button {
   -webkit-text-fill-color: transparent;
 }
 
+/* Event Quest Styles */
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.event-quest {
+  position: relative;
+  border: 2px solid transparent !important;
+  background: linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
+              conic-gradient(from var(--angle), #ff0000, #ff8800, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000) border-box !important;
+  animation: rotate 4s linear infinite;
+}
+
+/* Fallback for browsers not supporting @property */
+@supports not (background: paint(something)) {
+  .event-quest {
+    border: 2px solid var(--accent-warning) !important;
+    box-shadow: 0 0 15px rgba(255, 204, 0, 0.3);
+  }
+}
+
+@keyframes rotate {
+  to {
+    --angle: 360deg;
+  }
+}
+
+.countdown-timer {
+  font-family: monospace;
+  font-weight: bold;
+  color: var(--accent-warning);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+}
+
 /* Animations */
 @keyframes bounce {
 

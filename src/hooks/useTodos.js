@@ -29,7 +29,7 @@ export const useTodos = () => {
         else setTodos(data || []);
     };
 
-    const addTodo = async (title, reward, isDaily = false) => {
+    const addTodo = async (title, reward, isDaily = false, expiresAt = null) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
@@ -42,6 +42,7 @@ export const useTodos = () => {
             status: 'pending',
             completed_by: null,
             is_daily: isDaily,
+            expires_at: expiresAt,
             inserted_at: new Date().toISOString()
         };
         setTodos(prev => [optimisticTodo, ...prev]);
@@ -53,7 +54,8 @@ export const useTodos = () => {
                 title,
                 reward: parseInt(reward, 10) || 10,
                 user_id: user.id,
-                is_daily: isDaily
+                is_daily: isDaily,
+                expires_at: expiresAt
             }]);
 
         if (error) {
@@ -61,8 +63,36 @@ export const useTodos = () => {
             // Rollback on error
             setTodos(prev => prev.filter(t => t.id !== optimisticTodo.id));
         }
-        // Real-time will replace with actual data
     };
+
+    // Check for expired quests and delete them
+    useEffect(() => {
+        const checkExpired = async () => {
+            const now = new Date();
+            const expiredTodos = todos.filter(t =>
+                t.expires_at && new Date(t.expires_at) < now && t.status === 'pending'
+            );
+
+            if (expiredTodos.length > 0) {
+                // Optimistic delete
+                setTodos(prev => prev.filter(t => !expiredTodos.find(e => e.id === t.id)));
+
+                // Server delete
+                const { error } = await supabase
+                    .from('todos')
+                    .delete()
+                    .in('id', expiredTodos.map(t => t.id));
+
+                if (error) console.error('Error deleting expired todos:', error);
+            }
+        };
+
+        // Check every minute
+        const interval = setInterval(checkExpired, 60000);
+        checkExpired(); // Check immediately on load
+
+        return () => clearInterval(interval);
+    }, [todos]);
 
     const deleteTodo = async (id) => {
         // Optimistic update: Remove immediately from UI
