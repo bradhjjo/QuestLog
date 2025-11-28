@@ -52,11 +52,20 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (newTitle.trim()) {
-      onAdd(newTitle, newReward, isDaily);
+      let expiresAt = null;
+      if (timeLimit) {
+        const now = new Date();
+        const hours = parseInt(timeLimit);
+        now.setHours(now.getHours() + hours);
+        expiresAt = now.toISOString();
+      }
+
+      onAdd(newTitle, newReward, isDaily, expiresAt);
       setNewTitle('');
       setNewReward(10);
       setSelectedRecent('');
       setIsDaily(false);
+      setTimeLimit('');
     }
   };
 
