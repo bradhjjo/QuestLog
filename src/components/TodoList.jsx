@@ -176,7 +176,7 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
         ) : (
           <div className="tasks-grid">
             {filteredTodos.map(todo => (
-              <div key={todo.id} className={`task-card ${todo.status}`}>
+              <div key={todo.id} className={`task-card ${todo.status} ${todo.expires_at ? 'event-quest' : ''}`}>
                 <div className="task-content">
                   <div className="task-header">
                     {todo.is_daily && <span style={{ fontSize: '1rem', marginRight: '0.25rem' }}>🔄</span>}
