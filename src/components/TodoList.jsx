@@ -8,6 +8,7 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
   const [recentQuests, setRecentQuests] = useState([]);
   const [selectedRecent, setSelectedRecent] = useState('');
   const [isDaily, setIsDaily] = useState(false);
+  const [timeLimit, setTimeLimit] = useState('');
 
   // Fetch recent quests for dropdown
   useEffect(() => {
