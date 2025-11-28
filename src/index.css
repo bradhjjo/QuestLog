@@ -130,12 +130,14 @@ button {
 }
 
 
+
 /* Event Quest Styles - Animated Rainbow Border */
 .event-quest {
   position: relative;
   border: 3px solid transparent !important;
   background: var(--bg-card) !important;
   box-shadow: 0 0 20px rgba(255, 204, 0, 0.4);
+  overflow: visible;
 }
 
 .event-quest::before {
@@ -145,26 +147,28 @@ button {
   left: -3px;
   right: -3px;
   bottom: -3px;
-  background: linear-gradient(45deg,
-      #ff0000, #ff8800, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+  background: linear-gradient(90deg,
+      #ff0000 0%,
+      #ff8800 14%,
+      #ffff00 28%,
+      #00ff00 42%,
+      #00ffff 57%,
+      #0000ff 71%,
+      #ff00ff 85%,
+      #ff0000 100%);
   border-radius: var(--radius-md);
   z-index: -1;
-  opacity: 0.8;
-  animation: rotate-gradient 4s linear infinite;
-  background-size: 400% 400%;
+  opacity: 0.9;
+  animation: rotate-hue 4s linear infinite;
 }
 
-@keyframes rotate-gradient {
+@keyframes rotate-hue {
   0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
+    filter: hue-rotate(0deg);
   }
 
   100% {
-    background-position: 0% 50%;
+    filter: hue-rotate(360deg);
   }
 }
 

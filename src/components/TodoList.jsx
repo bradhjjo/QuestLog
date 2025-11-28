@@ -180,6 +180,7 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
                 <div className="task-content">
                   <div className="task-header">
                     {todo.is_daily && <span style={{ fontSize: '1rem', marginRight: '0.25rem' }}>🔄</span>}
+                    {todo.expires_at && <CountdownTimer expiresAt={todo.expires_at} />}
                     <span className="xp-badge">+{todo.reward} XP</span>
                     <span className={`status-badge ${todo.status}`}>{todo.status}</span>
                   </div>
@@ -352,6 +353,35 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
       `}</style>
     </div>
   );
+};
+
+const CountdownTimer = ({ expiresAt }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    const updateTimer = () => {
+      const now = new Date();
+      const end = new Date(expiresAt);
+      const diff = end - now;
+
+      if (diff <= 0) {
+        setTimeLeft('Expired');
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setTimeLeft(`⏳ ${hours}h ${minutes}m ${seconds}s`);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt]);
+
+  return <span className="countdown-timer">{timeLeft}</span>;
 };
 
 export default TodoList;
