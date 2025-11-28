@@ -129,32 +129,42 @@ button {
   -webkit-text-fill-color: transparent;
 }
 
-/* Event Quest Styles */
-@property --angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
 
+/* Event Quest Styles - Animated Rainbow Border */
 .event-quest {
   position: relative;
-  border: 2px solid transparent !important;
-  background: linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
-              conic-gradient(from var(--angle), #ff0000, #ff8800, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000) border-box !important;
-  animation: rotate 4s linear infinite;
+  border: 3px solid transparent !important;
+  background: var(--bg-card) !important;
+  box-shadow: 0 0 20px rgba(255, 204, 0, 0.4);
 }
 
-/* Fallback for browsers not supporting @property */
-@supports not (background: paint(something)) {
-  .event-quest {
-    border: 2px solid var(--accent-warning) !important;
-    box-shadow: 0 0 15px rgba(255, 204, 0, 0.3);
+.event-quest::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(45deg,
+      #ff0000, #ff8800, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+  border-radius: var(--radius-md);
+  z-index: -1;
+  opacity: 0.8;
+  animation: rotate-gradient 4s linear infinite;
+  background-size: 400% 400%;
+}
+
+@keyframes rotate-gradient {
+  0% {
+    background-position: 0% 50%;
   }
-}
 
-@keyframes rotate {
-  to {
-    --angle: 360deg;
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
   }
 }
 
