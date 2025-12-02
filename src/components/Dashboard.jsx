@@ -151,23 +151,69 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
                 {role === 'teen' && <LevelProgress xp={xp} />}
                 {role === 'parent' && (
                     <div className="children-list">
-                        <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--text-secondary)' }}>Children Progress</h3>
+                        <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--text-secondary)' }}>
+                            👨‍👩‍👧‍👦 Teen Progress
+                        </h3>
                         {children.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)' }}>No children accounts found.</p>
+                            <p style={{ color: 'var(--text-muted)' }}>No teen accounts found.</p>
                         ) : (
-                            <div style={{ display: 'grid', gap: 'var(--spacing-sm)' }}>
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                                gap: 'var(--spacing-md)'
+                            }}>
                                 {children.map(child => (
                                     <div key={child.id} style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        padding: 'var(--spacing-sm)',
+                                        padding: 'var(--spacing-md)',
                                         background: 'var(--bg-secondary)',
                                         borderRadius: 'var(--radius-md)',
-                                        border: '1px solid var(--border-color)'
+                                        border: '1px solid var(--border-color)',
+                                        textAlign: 'center'
                                     }}>
-                                        <span style={{ color: 'var(--text-primary)' }}>{child.username || 'Teen User'}</span>
-                                        <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>{child.xp} XP</span>
+                                        <div style={{
+                                            fontSize: '2.5rem',
+                                            animation: 'bounce 2s infinite',
+                                            marginBottom: 'var(--spacing-sm)'
+                                        }}>
+                                            {getPokemon(child.level || 1)}
+                                        </div>
+                                        <h4 style={{
+                                            margin: 0,
+                                            color: 'var(--text-primary)',
+                                            fontSize: '1rem'
+                                        }}>
+                                            {child.username || 'Teen User'}
+                                        </h4>
+                                        <p style={{
+                                            margin: '0.25rem 0',
+                                            color: 'var(--accent-primary)',
+                                            fontWeight: 'bold',
+                                            fontSize: '0.875rem'
+                                        }}>
+                                            Level {child.level || 1}
+                                        </p>
+                                        <div style={{
+                                            height: '8px',
+                                            background: 'var(--bg-primary)',
+                                            borderRadius: 'var(--radius-sm)',
+                                            overflow: 'hidden',
+                                            marginTop: 'var(--spacing-sm)',
+                                            marginBottom: '0.25rem'
+                                        }}>
+                                            <div style={{
+                                                height: '100%',
+                                                background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))',
+                                                width: `${Math.min(((child.xp || 0) / 500) * 100, 100)}%`,
+                                                transition: 'width 0.3s ease'
+                                            }} />
+                                        </div>
+                                        <p style={{
+                                            margin: 0,
+                                            color: 'var(--text-secondary)',
+                                            fontSize: '0.75rem'
+                                        }}>
+                                            {child.xp || 0} / 500 XP
+                                        </p>
                                     </div>
                                 ))}
                             </div>

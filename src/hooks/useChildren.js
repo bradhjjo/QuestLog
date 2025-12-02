@@ -22,9 +22,9 @@ export const useChildren = () => {
     const fetchChildren = async () => {
         const { data, error } = await supabase
             .from('profiles')
-            .select('id, xp, role, username')
+            .select('id, xp, role, username, level, total_xp_earned')
             .eq('role', 'teen')
-            .order('xp', { ascending: false });
+            .order('level', { ascending: false });
 
         if (error) console.error('Error fetching children:', error);
         else setChildren(data || []);
