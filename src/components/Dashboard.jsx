@@ -148,7 +148,7 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
                         </div>
                     )}
                 </div>
-                {role === 'teen' && <LevelProgress xp={xp} />}
+                {role === 'teen' && <LevelProgress xp={xp} level={level} />}
                 {role === 'parent' && (
                     <div className="children-list">
                         <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--text-secondary)' }}>

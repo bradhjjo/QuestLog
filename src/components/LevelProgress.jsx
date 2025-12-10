@@ -2,29 +2,32 @@ import React from 'react';
 
 const LEVEL_THRESHOLDS = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500, 5500];
 
-const LevelProgress = ({ xp }) => {
+const LevelProgress = ({ xp, level }) => {
+  // If level isn't provided, calculate it (fallback)
+  const calculatedLevel = level || (() => {
     const currentLevel = LEVEL_THRESHOLDS.findIndex(threshold => xp < threshold);
-    const level = currentLevel === -1 ? LEVEL_THRESHOLDS.length : currentLevel;
+    return currentLevel === -1 ? LEVEL_THRESHOLDS.length : currentLevel;
+  })();
 
-    const currentLevelXp = LEVEL_THRESHOLDS[level - 1] || 0;
-    const nextLevelXp = LEVEL_THRESHOLDS[level] || LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
+  const currentLevelXp = LEVEL_THRESHOLDS[calculatedLevel - 1] || 0;
+  const nextLevelXp = LEVEL_THRESHOLDS[calculatedLevel] || LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
 
-    const progress = Math.min(100, Math.max(0, ((xp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100));
+  const progress = Math.min(100, Math.max(0, ((xp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100));
 
-    return (
-        <div className="level-progress">
-            <div className="level-info">
-                <span className="level-badge">Lvl {level}</span>
-                <span className="xp-text">{xp} / {nextLevelXp} XP</span>
-            </div>
-            <div className="progress-bar-container">
-                <div
-                    className="progress-bar-fill"
-                    style={{ width: `${progress}%` }}
-                />
-            </div>
+  return (
+    <div className="level-progress">
+      <div className="level-info">
+        <span className="level-badge">Lvl {calculatedLevel}</span>
+        <span className="xp-text">{xp} / {nextLevelXp} XP</span>
+      </div>
+      <div className="progress-bar-container">
+        <div
+          className="progress-bar-fill"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
 
-            <style>{`
+      <style>{`
         .level-progress {
           margin-bottom: var(--spacing-md);
           background: var(--bg-secondary);
@@ -60,8 +63,8 @@ const LevelProgress = ({ xp }) => {
           box-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default LevelProgress;
