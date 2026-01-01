@@ -15,7 +15,7 @@ import { supabase } from '../supabaseClient';
 
 const Dashboard = ({ role, initialTab = 'quests' }) => {
     const { todos, addTodo, deleteTodo, toggleComplete, approveTodo } = useTodos();
-    const { xp, level, avatarId, updateAvatar } = useUser();
+    const { xp, level, avatarId, updateAvatar, addXp, spendXp } = useUser();
     const { children } = useChildren();
     const { checkAndUnlock } = useAchievements();
     const [activeTab, setActiveTab] = useState(initialTab);
@@ -73,12 +73,6 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
 
                 if (error) console.error('Error updating XP:', error);
 
-                // Play sounds
-                soundManager.playQuestComplete();
-                if (newLevel > profile.level) {
-                    soundManager.playLevelUp();
-                }
-
                 // Check for achievements
                 // 1. Level reached
                 checkAndUnlock(todo.completed_by, 'level_reached', newLevel);
@@ -105,12 +99,6 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
                 }
             }
 
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
-
             // Auto-delete after 3 seconds
             setTimeout(() => {
                 deleteTodo(id);
@@ -118,11 +106,6 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
         } else if (todo) {
             // Fallback if completed_by is missing (legacy tasks)
             approveTodo(id);
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
 
             // Auto-delete after 3 seconds
             setTimeout(() => {
