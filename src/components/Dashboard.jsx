@@ -9,6 +9,7 @@ import { useTodos } from '../hooks/useTodos';
 import { useUser } from '../hooks/useUser';
 import { useChildren } from '../hooks/useChildren';
 import { useAchievements } from '../hooks/useAchievements';
+import { useNotifications } from '../hooks/useNotifications';
 import { soundManager } from '../utils/soundManager';
 
 import { supabase } from '../supabaseClient';
@@ -18,6 +19,7 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
     const { xp, level, avatarId, updateAvatar, addXp, spendXp } = useUser();
     const { children } = useChildren();
     const { checkAndUnlock } = useAchievements();
+    const { permission, requestPermission, showLocalNotification } = useNotifications();
     const [activeTab, setActiveTab] = useState(initialTab);
     const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
@@ -130,6 +132,43 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
             setLoading(false);
         }
     };
+
+    // Real-time notification listener
+    useEffect(() => {
+        if (permission !== 'granted') return;
+
+        const channel = supabase
+            .channel('questlog-notifications')
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'todos'
+            }, (payload) => {
+                if (role === 'teen' && payload.new.status === 'pending') {
+                    showLocalNotification('⚔️ New Quest Alert!', {
+                        body: `New quest added: ${payload.new.title}`,
+                        tag: `new-quest-${payload.new.id}`
+                    });
+                }
+            })
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'todos'
+            }, (payload) => {
+                if (role === 'parent' && payload.new.status === 'completed' && payload.old.status !== 'completed') {
+                    showLocalNotification('✅ Quest Completed!', {
+                        body: `A quest was marked as complete! Review and approve it.`,
+                        tag: `complete-quest-${payload.new.id}`
+                    });
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [role, permission]);
 
     // Calculate level from total XP
     const calculateLevel = (totalXp) => {
@@ -393,10 +432,50 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
                                         style={{ width: '100%' }}
                                     />
                                 </div>
-                                <button className="btn btn-primary" disabled={loading}>
+                                <button className="btn btn-primary" disabled={loading} style={{ width: '100%', marginBottom: 'var(--spacing-md)' }}>
                                     {loading ? 'Updating...' : 'Update Password'}
                                 </button>
                             </form>
+
+                            <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: 'var(--spacing-lg) 0' }} />
+
+                            <div className="notification-settings">
+                                <h4 style={{ marginBottom: 'var(--spacing-sm)' }}>Push Notifications</h4>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: 'var(--spacing-md)' }}>
+                                    Get notified when new quests are added or completed.
+                                </p>
+                                {permission === 'granted' ? (
+                                    <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                                        ✅ Notifications Enabled
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={async () => {
+                                            const granted = await requestPermission();
+                                            if (granted) {
+                                                // Save to profiles (future-proofing for true push)
+                                                const { data: { user } } = await supabase.auth.getUser();
+                                                if (user) {
+                                                    await supabase
+                                                        .from('profiles')
+                                                        .update({ push_subscription: { status: 'granted', updated_at: new Date().toISOString() } })
+                                                        .eq('id', user.id);
+                                                }
+
+                                                showLocalNotification('Notifications Enabled!', {
+                                                    body: 'You will now receive quest updates.'
+                                                });
+                                            } else {
+                                                alert('Notification permission denied.');
+                                            }
+                                        }}
+                                        className="btn btn-secondary"
+                                        style={{ width: '100%' }}
+                                    >
+                                        🔔 Enable Notifications
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     )}
                 </motion.div>
