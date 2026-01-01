@@ -19,6 +19,7 @@ export const useUser = () => {
     const [xp, setXp] = useState(0);
     const [level, setLevel] = useState(1);
     const [totalXpEarned, setTotalXpEarned] = useState(0);
+    const [avatarId, setAvatarId] = useState('starter_1');
     const [userId, setUserId] = useState(null);
 
     useEffect(() => {
@@ -38,6 +39,7 @@ export const useUser = () => {
                         setXp(payload.new.xp);
                         setLevel(payload.new.level || calculateLevel(payload.new.total_xp_earned || 0));
                         setTotalXpEarned(payload.new.total_xp_earned || 0);
+                        setAvatarId(payload.new.avatar_id || 'starter_1');
                     })
                     .subscribe();
 
@@ -51,7 +53,7 @@ export const useUser = () => {
     const fetchProfile = async (id) => {
         const { data, error } = await supabase
             .from('profiles')
-            .select('xp, level, total_xp_earned')
+            .select('xp, level, total_xp_earned, avatar_id')
             .eq('id', id)
             .single();
 
@@ -61,6 +63,23 @@ export const useUser = () => {
             const totalXp = data?.total_xp_earned || 0;
             setTotalXpEarned(totalXp);
             setLevel(data?.level || calculateLevel(totalXp));
+            setAvatarId(data?.avatar_id || 'starter_1');
+        }
+    };
+
+    const updateAvatar = async (newAvatarId) => {
+        if (!userId) return;
+
+        setAvatarId(newAvatarId);
+        const { error } = await supabase
+            .from('profiles')
+            .update({ avatar_id: newAvatarId })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Error updating avatar:', error);
+            // Re-fetch to sync
+            fetchProfile(userId);
         }
     };
 
@@ -120,7 +139,9 @@ export const useUser = () => {
         xp,
         level,
         totalXpEarned,
+        avatarId,
         addXp,
-        spendXp
+        spendXp,
+        updateAvatar
     };
 };

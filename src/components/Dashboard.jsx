@@ -1,29 +1,49 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'framer-motion';
 import TodoList from './TodoList';
 import RewardShop from './RewardShop';
 import LevelProgress from './LevelProgress';
+import Achievements from './Achievements';
 import { useTodos } from '../hooks/useTodos';
 import { useUser } from '../hooks/useUser';
 import { useChildren } from '../hooks/useChildren';
+import { useAchievements } from '../hooks/useAchievements';
+import { soundManager } from '../utils/soundManager';
 
 import { supabase } from '../supabaseClient';
 
 const Dashboard = ({ role, initialTab = 'quests' }) => {
     const { todos, addTodo, deleteTodo, toggleComplete, approveTodo } = useTodos();
-    const { xp, level, addXp, spendXp } = useUser();
+    const { xp, level, avatarId, updateAvatar } = useUser();
     const { children } = useChildren();
+    const { checkAndUnlock } = useAchievements();
     const [activeTab, setActiveTab] = useState(initialTab);
+    const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+
+    const AVATARS = [
+        { id: 'starter_1', icon: '👤', name: 'Rookie' },
+        { id: 'warrior', icon: '⚔️', name: 'Warrior' },
+        { id: 'mage', icon: '🧙', name: 'Mage' },
+        { id: 'ninja', icon: '🥷', name: 'Ninja' },
+        { id: 'robot', icon: '🤖', name: 'Bot' },
+        { id: 'ghost', icon: '👻', name: 'Spooky' },
+    ];
     const [newPassword, setNewPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
     // Pokemon evolution based on level
     const getPokemon = (lvl) => {
-        if (lvl <= 2) return '🥚'; // Egg
+        if (lvl <= 1) return '🥚'; // Egg
+        if (lvl <= 2) return '🐣'; // Hatching
+        if (lvl <= 3) return '🐥'; // Chick
         if (lvl <= 4) return '🐛'; // Caterpie
-        if (lvl <= 6) return '🦋'; // Butterfree
-        if (lvl <= 8) return '🔥'; // Charmander
-        return '🐉'; // Charizard
+        if (lvl <= 5) return '🦋'; // Butterfree
+        if (lvl <= 6) return '🔥'; // Charmander
+        if (lvl <= 7) return '🦖'; // Charmeleon
+        if (lvl <= 8) return '🐉'; // Charizard
+        if (lvl <= 9) return '🐲'; // Ancient Dragon
+        return '🌌'; // Cosmic Entity
     };
 
     const handleApprove = async (id) => {
@@ -52,6 +72,37 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
                     .eq('id', todo.completed_by);
 
                 if (error) console.error('Error updating XP:', error);
+
+                // Play sounds
+                soundManager.playQuestComplete();
+                if (newLevel > profile.level) {
+                    soundManager.playLevelUp();
+                }
+
+                // Check for achievements
+                // 1. Level reached
+                checkAndUnlock(todo.completed_by, 'level_reached', newLevel);
+
+                // 2. Total quests approved
+                const { count: approvedCount } = await supabase
+                    .from('todos')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('completed_by', todo.completed_by)
+                    .eq('status', 'approved');
+
+                checkAndUnlock(todo.completed_by, 'total_quests', (approvedCount || 0) + 1);
+
+                // 3. Daily quests count
+                if (todo.is_daily) {
+                    const { count: dailyCount } = await supabase
+                        .from('todos')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('completed_by', todo.completed_by)
+                        .eq('status', 'approved')
+                        .eq('is_daily', true);
+
+                    checkAndUnlock(todo.completed_by, 'daily_quests', (dailyCount || 0) + 1);
+                }
             }
 
             confetti({
@@ -116,6 +167,67 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
             <div className="stats-bar card" style={{ marginBottom: 'var(--spacing-lg)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                        <div style={{ position: 'relative' }}>
+                            <div
+                                onClick={() => role === 'teen' && setShowAvatarPicker(!showAvatarPicker)}
+                                style={{
+                                    fontSize: '3rem',
+                                    cursor: role === 'teen' ? 'pointer' : 'default',
+                                    background: 'var(--bg-secondary)',
+                                    width: '80px',
+                                    height: '80px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: 'var(--radius-full)',
+                                    border: '2px solid var(--accent-primary)',
+                                    boxShadow: 'var(--shadow-glow-green)'
+                                }}
+                            >
+                                {AVATARS.find(a => a.id === avatarId)?.icon || '👤'}
+                            </div>
+                            <AnimatePresence>
+                                {showAvatarPicker && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                                        className="card avatar-picker"
+                                        style={{
+                                            position: 'absolute',
+                                            top: '90px',
+                                            left: '0',
+                                            zIndex: 100,
+                                            width: '240px',
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(3, 1fr)',
+                                            gap: 'var(--spacing-sm)',
+                                            padding: 'var(--spacing-sm)'
+                                        }}
+                                    >
+                                        {AVATARS.map(avatar => (
+                                            <button
+                                                key={avatar.id}
+                                                onClick={() => {
+                                                    updateAvatar(avatar.id);
+                                                    setShowAvatarPicker(false);
+                                                    soundManager.playClick();
+                                                }}
+                                                style={{
+                                                    fontSize: '2rem',
+                                                    padding: 'var(--spacing-xs)',
+                                                    borderRadius: 'var(--radius-md)',
+                                                    background: avatarId === avatar.id ? 'var(--bg-primary)' : 'transparent',
+                                                    border: avatarId === avatar.id ? '1px solid var(--accent-primary)' : 'none'
+                                                }}
+                                            >
+                                                {avatar.icon}
+                                            </button>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                         {role === 'teen' && (
                             <div style={{ textAlign: 'center' }}>
                                 <div style={{
@@ -236,6 +348,12 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
                     Rewards
                 </button>
                 <button
+                    className={`btn ${activeTab === 'achievements' ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => setActiveTab('achievements')}
+                >
+                    Hall of Fame
+                </button>
+                <button
                     className={`btn ${activeTab === 'settings' ? 'btn-primary' : 'btn-secondary'}`}
                     onClick={() => setActiveTab('settings')}
                 >
@@ -243,49 +361,63 @@ const Dashboard = ({ role, initialTab = 'quests' }) => {
                 </button>
             </div>
 
-            {activeTab === 'quests' && (
-                <TodoList
-                    role={role}
-                    todos={todos}
-                    onAdd={addTodo}
-                    onDelete={deleteTodo}
-                    onToggle={toggleComplete}
-                    onApprove={handleApprove}
-                    children={children}
-                />
-            )}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    {activeTab === 'quests' && (
+                        <TodoList
+                            role={role}
+                            todos={todos}
+                            onAdd={addTodo}
+                            onDelete={deleteTodo}
+                            onToggle={toggleComplete}
+                            onApprove={handleApprove}
+                            children={children}
+                        />
+                    )}
 
-            {activeTab === 'rewards' && (
-                <RewardShop
-                    role={role}
-                    xp={xp}
-                    onSpend={spendXp}
-                />
-            )}
+                    {activeTab === 'rewards' && (
+                        <RewardShop
+                            role={role}
+                            xp={xp}
+                            onSpend={spendXp}
+                        />
+                    )}
 
-            {activeTab === 'settings' && (
-                <div className="card">
-                    <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Settings</h3>
-                    <form onSubmit={handlePasswordChange}>
-                        <div className="form-group" style={{ marginBottom: 'var(--spacing-md)' }}>
-                            <label style={{ display: 'block', marginBottom: 'var(--spacing-xs)' }}>New Password</label>
-                            <input
-                                className="input"
-                                type="password"
-                                placeholder="Enter new password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                required
-                                minLength={6}
-                                style={{ width: '100%' }}
-                            />
+                    {activeTab === 'achievements' && (
+                        <Achievements />
+                    )}
+
+                    {activeTab === 'settings' && (
+                        <div className="card">
+                            <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Settings</h3>
+                            <form onSubmit={handlePasswordChange}>
+                                <div className="form-group" style={{ marginBottom: 'var(--spacing-md)' }}>
+                                    <label style={{ display: 'block', marginBottom: 'var(--spacing-xs)' }}>New Password</label>
+                                    <input
+                                        className="input"
+                                        type="password"
+                                        placeholder="Enter new password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        required
+                                        minLength={6}
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+                                <button className="btn btn-primary" disabled={loading}>
+                                    {loading ? 'Updating...' : 'Update Password'}
+                                </button>
+                            </form>
                         </div>
-                        <button className="btn btn-primary" disabled={loading}>
-                            {loading ? 'Updating...' : 'Update Password'}
-                        </button>
-                    </form>
-                </div>
-            )}
+                    )}
+                </motion.div>
+            </AnimatePresence>
         </div>
     );
 };

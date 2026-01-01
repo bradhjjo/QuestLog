@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
+import { soundManager } from '../utils/soundManager';
 
 const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children }) => {
   const [newTitle, setNewTitle] = useState('');
@@ -9,6 +10,15 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
   const [selectedRecent, setSelectedRecent] = useState('');
   const [isDaily, setIsDaily] = useState(false);
   const [timeLimit, setTimeLimit] = useState('');
+  const [newCategory, setNewCategory] = useState('other');
+
+  const CATEGORY_ICONS = {
+    body: '💪',
+    mind: '🧠',
+    social: '🤝',
+    home: '🏠',
+    other: '✨'
+  };
 
   // Fetch recent quests for dropdown
   useEffect(() => {
@@ -60,12 +70,13 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
         expiresAt = now.toISOString();
       }
 
-      onAdd(newTitle, newReward, isDaily, expiresAt);
+      onAdd(newTitle, newReward, isDaily, expiresAt, newCategory);
       setNewTitle('');
       setNewReward(10);
       setSelectedRecent('');
       setIsDaily(false);
       setTimeLimit('');
+      setNewCategory('other');
     }
   };
 
@@ -114,6 +125,17 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
               className="input"
             />
             <div className="form-row">
+              <select
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="input category-input"
+              >
+                <option value="other">✨ Other</option>
+                <option value="body">💪 Body</option>
+                <option value="mind">🧠 Mind</option>
+                <option value="social">🤝 Social</option>
+                <option value="home">🏠 Home</option>
+              </select>
               <input
                 type="number"
                 value={newReward}
@@ -174,69 +196,82 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
         {filteredTodos.length === 0 ? (
           <p className="empty-state">No active quests available.</p>
         ) : (
-          <div className="tasks-grid">
-            {filteredTodos.map(todo => (
-              <div key={todo.id} className={`task-card ${todo.status} ${todo.expires_at ? 'event-quest' : ''}`}>
-                <div className="task-content">
-                  <div className="task-header">
-                    {todo.is_daily && <span style={{ fontSize: '1rem', marginRight: '0.25rem' }}>🔄</span>}
-                    {todo.expires_at && <CountdownTimer expiresAt={todo.expires_at} />}
-                    <span className="xp-badge">+{todo.reward} XP</span>
-                    <span className={`status-badge ${todo.status}`}>{todo.status}</span>
+          <motion.div layout className="tasks-grid">
+            <AnimatePresence>
+              {filteredTodos.map(todo => (
+                <motion.div
+                  key={todo.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  whileHover={{ scale: 1.02 }}
+                  className={`task-card ${todo.status} ${todo.expires_at ? 'event-quest' : ''}`}
+                >
+                  <div className="task-content">
+                    <div className="task-header">
+                      <span className="category-icon" title={todo.category}>
+                        {CATEGORY_ICONS[todo.category] || '✨'}
+                      </span>
+                      {todo.is_daily && <span style={{ fontSize: '1rem', marginRight: '0.25rem' }}>🔄</span>}
+                      {todo.expires_at && <CountdownTimer expiresAt={todo.expires_at} />}
+                      <span className="xp-badge">+{todo.reward} XP</span>
+                      <span className={`status-badge ${todo.status}`}>{todo.status}</span>
+                    </div>
+                    <h4>{todo.title}</h4>
+                    {role === 'parent' && todo.status === 'completed' && todo.completed_by && children && (
+                      <p style={{
+                        fontSize: '0.875rem',
+                        color: 'var(--text-secondary)',
+                        marginTop: 'var(--spacing-xs)'
+                      }}>
+                        Completed by: {children.find(c => c.id === todo.completed_by)?.username || 'Teen User'}
+                      </p>
+                    )}
                   </div>
-                  <h4>{todo.title}</h4>
-                  {role === 'parent' && todo.status === 'completed' && todo.completed_by && children && (
-                    <p style={{
-                      fontSize: '0.875rem',
-                      color: 'var(--text-secondary)',
-                      marginTop: 'var(--spacing-xs)'
-                    }}>
-                      Completed by: {children.find(c => c.id === todo.completed_by)?.username || 'Teen User'}
-                    </p>
-                  )}
-                </div>
 
-                <div className="task-actions">
-                  {role === 'teen' && todo.status === 'pending' && (
-                    <button onClick={() => onToggle(todo.id)} className="btn btn-primary btn-sm">
-                      Complete
-                    </button>
-                  )}
-                  {role === 'teen' && todo.status === 'completed' && (
-                    <button onClick={() => onToggle(todo.id)} className="btn btn-secondary btn-sm">
-                      Undo
-                    </button>
-                  )}
-
-                  {role === 'parent' && (
-                    <>
-                      {todo.status === 'completed' && (
-                        <button onClick={() => onApprove(todo.id)} className="btn btn-primary btn-sm">
-                          Approve
-                        </button>
-                      )}
-                      {todo.status === 'approved' && (
-                        <button
-                          onClick={() => onAdd(todo.title, todo.reward, todo.is_daily)}
-                          className="btn btn-primary btn-sm"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.25rem'
-                          }}
-                        >
-                          🔄 Repeat
-                        </button>
-                      )}
-                      <button onClick={() => onDelete(todo.id)} className="btn btn-secondary btn-sm danger">
-                        Delete
+                  <div className="task-actions">
+                    {role === 'teen' && todo.status === 'pending' && (
+                      <button onClick={() => { soundManager.playClick(); onToggle(todo.id); }} className="btn btn-primary btn-sm">
+                        Complete
                       </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+                    )}
+                    {role === 'teen' && todo.status === 'completed' && (
+                      <button onClick={() => { soundManager.playClick(); onToggle(todo.id); }} className="btn btn-secondary btn-sm">
+                        Undo
+                      </button>
+                    )}
+
+                    {role === 'parent' && (
+                      <>
+                        {todo.status === 'completed' && (
+                          <button onClick={() => onApprove(todo.id)} className="btn btn-primary btn-sm">
+                            Approve
+                          </button>
+                        )}
+                        {todo.status === 'approved' && (
+                          <button
+                            onClick={() => { soundManager.playClick(); onAdd(todo.title, todo.reward, todo.is_daily, null, todo.category); }}
+                            className="btn btn-primary btn-sm"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}
+                          >
+                            🔄 Repeat
+                          </button>
+                        )}
+                        <button onClick={() => { soundManager.playClick(); onDelete(todo.id); }} className="btn btn-secondary btn-sm danger">
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         )}
       </div>
 
@@ -270,9 +305,13 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
         .input[type="text"] {
           width: 100%;
         }
-        .reward-input {
+        .category-input {
           flex: 1;
-          min-width: 100px;
+          min-width: 120px;
+        }
+        .reward-input {
+          flex: 0.5;
+          min-width: 80px;
         }
         .btn-primary {
           flex: 1;
@@ -315,8 +354,19 @@ const TodoList = ({ role, todos, onAdd, onDelete, onToggle, onApprove, children 
         
         .task-header {
           display: flex;
+          align-items: center;
           gap: var(--spacing-sm);
           margin-bottom: var(--spacing-xs);
+        }
+        .category-icon {
+          font-size: 1.25rem;
+          background: var(--bg-secondary);
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: var(--radius-sm);
         }
         .xp-badge {
           color: var(--accent-primary);

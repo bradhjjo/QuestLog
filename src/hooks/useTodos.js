@@ -29,7 +29,7 @@ export const useTodos = () => {
         else setTodos(data || []);
     };
 
-    const addTodo = async (title, reward, isDaily = false, expiresAt = null) => {
+    const addTodo = async (title, reward, isDaily = false, expiresAt = null, category = 'other') => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
@@ -43,6 +43,7 @@ export const useTodos = () => {
             completed_by: null,
             is_daily: isDaily,
             expires_at: expiresAt,
+            category: category,
             inserted_at: new Date().toISOString()
         };
         setTodos(prev => [optimisticTodo, ...prev]);
@@ -55,7 +56,8 @@ export const useTodos = () => {
                 reward: parseInt(reward, 10) || 10,
                 user_id: user.id,
                 is_daily: isDaily,
-                expires_at: expiresAt
+                expires_at: expiresAt,
+                category: category
             }]);
 
         if (error) {
